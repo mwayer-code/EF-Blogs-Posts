@@ -1,4 +1,5 @@
-﻿using NLog;
+﻿using Microsoft.EntityFrameworkCore;
+using NLog;
 using System.Linq;
 
 // See https://aka.ms/new-console-template for more information
@@ -15,7 +16,8 @@ while (true){
     Console.WriteLine("1. Display all Blogs");
     Console.WriteLine("2. Add a Blog");
     Console.WriteLine("3. Create Post ");
-    Console.WriteLine("4. Exit");
+    Console.WriteLine("4. Display Posts");
+    Console.WriteLine("5. Exit");
 
     var option = Console.ReadLine();
 
@@ -116,6 +118,66 @@ while (true){
         break;
 
     case "4":
+        try
+        {
+                // Display all blogs
+            var blogs = db.Blogs.Include(b => b.Posts).OrderBy(b => b.Name).ToList();
+            if (!blogs.Any())
+            {
+                Console.WriteLine("No blogs found in the database.");
+                break;
+            }
+
+            Console.WriteLine("Select a blog to view posts from:");
+            Console.WriteLine("0. Posts from all blogs");
+            for (int i = 0; i < blogs.Count; i++)
+            {
+                Console.WriteLine($"{i + 1}. {blogs[i].Name}");
+            }
+
+            // Get blog selection from user
+            int selectedBlogIndex = Convert.ToInt32(Console.ReadLine()) - 1;
+
+            if (selectedBlogIndex == -1){
+                foreach (var eachBlog in blogs)
+                {
+                    Console.WriteLine($"Blog: {eachBlog.Name}");
+                    foreach (var post in eachBlog.Posts)
+                    {
+                        Console.WriteLine($"Post Title: {post.Title}, Post Content: {post.Content}");
+                    }
+                }
+            }
+            else if (selectedBlogIndex < 0 || selectedBlogIndex >= blogs.Count)
+            {
+                Console.WriteLine("Invalid selection. Please select a valid blog.");
+                break;
+            }
+            else 
+            {
+                 var selectedBlog = blogs[selectedBlogIndex];
+
+                 if (!selectedBlog.Posts.Any())
+                {
+                    Console.WriteLine("No posts found for this blog.");
+                    break;
+                }
+
+                Console.WriteLine($"Total posts: {selectedBlog.Posts.Count}");
+
+                foreach (var post in selectedBlog.Posts)
+                {
+                    Console.WriteLine($"Blog: {selectedBlog.Name}, Post Title: {post.Title}, Post Content: {post.Content}");
+                }
+            }    
+        } catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred: {ex.Message}");
+        }
+        break;
+
+
+    case "5":
         logger.Info("Program ended");
         return;
 
